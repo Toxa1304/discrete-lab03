@@ -1,8 +1,7 @@
 package lv.rbs.ds.lab03
 
+import net.liftweb.json._
 import org.scalatest._
-//import net.liftweb.json._
-import play.api.libs.json.{JsValue, Json}
 class KMPmatcherTest extends FlatSpec with Matchers {
 
   // **************************************************************************
@@ -68,16 +67,16 @@ class KMPmatcherTest extends FlatSpec with Matchers {
     val tt = (json \ "text").extract[String]
     tt should be(myText)
   }
-//
-//  ignore should "count character comparisons correctly" in {
-//    val matcher = new KMPmatcher("ABCDABD")
-//    val result = matcher.toJson("ABC ABCDAB ABCDABCDABDE")
-//    val json = parse(result)
-//    implicit val formats = DefaultFormats
-//    val comparisons = (json \ "comparisons").extract[Int]
-//    comparisons should be(27)
-//  }
-//
+
+  ignore should "count character comparisons correctly" in {
+    val matcher = new KMPmatcher("ABCDABD")
+    val result = matcher.toJson("ABC ABCDAB ABCDABCDABDE")
+    val json = parse(result)
+    implicit val formats = DefaultFormats
+    val comparisons = (json \ "comparisons").extract[Int]
+    comparisons should be(27)
+  }
+
 //  ignore should "return correct steps 0, 1 and 6" in {
 //    val matcher = new KMPmatcher("ABCDABD")
 //    val result = matcher.toJson("ABC ABCDAB ABCDABCDABDE")

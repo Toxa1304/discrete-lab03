@@ -7,7 +7,7 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 class KMPmatcher(var pattern: String) {
   // Add some initialization steps -> you can compute the prefix function...
   // loops...
-
+  var comparisons = 0
   def getPrefixFun(): ArrayBuffer[Int] = {
     val lookupTable = ArrayBuffer.fill(pattern.length)(-1)
     lookupTable(0) = 0 // first char always 0
@@ -31,8 +31,11 @@ class KMPmatcher(var pattern: String) {
   }
 
   def findAllIn(searchIn: String): Iterator[Int] = {
+    var comparisons = 0
     var result: ArrayBuffer[Int] = ArrayBuffer()
+    comparisons += 3 //because it does 3 comparisons outside while loop
     if (pattern.length > searchIn.length) println("bad input")
+
     else if (pattern == searchIn) println("same strings")
     else {
       val lookupTable = getPrefixFun()
@@ -41,9 +44,12 @@ class KMPmatcher(var pattern: String) {
       var j= 0 // for searchIn
 
       while (i < searchIn.length) {
+        comparisons += 1 // count all comparisons
         if (searchIn(i) == pattern(j)) {
           i += 1
           j += 1
+
+          println(i)
         }
         if (j == pattern.length) {
           println(s"pattern found at ${i-j}")
@@ -52,14 +58,16 @@ class KMPmatcher(var pattern: String) {
           j = lookupTable(j-1)
         }
         else {
+
           if (i < searchIn.length && searchIn(i) != pattern(j)) {
             if (j != 0) j = lookupTable(j-1)
             else i+=1
+
           }
         }
       }
     }
-    println(result)
+    println(comparisons)
     result.toIterator
 
   }
@@ -77,7 +85,7 @@ class KMPmatcher(var pattern: String) {
     }
     val jsonPrefixFun: JsValue = Json.toJson(prefixFunList.toList)
    // val jsonSteps: JsValue = Json.toJson(listForSteps) //List[Map[String, String]]
-  //  val jsonComparisons: JsValue = Json.toJson(comparisons)
+    val jsonComparisons: JsValue = Json.toJson(comparisons)
 
     val jsonMap: Map[String, JsValue] = Map(
       "algorithm" -> jsonAlgorithm,
@@ -85,7 +93,7 @@ class KMPmatcher(var pattern: String) {
       "text" -> jsonText,
       "prefixFun" -> jsonPrefixFun,
    //   "steps" -> jsonSteps,
-    //  "comparisons" -> jsonComparisons
+    "comparisons" -> jsonComparisons
     )
     val result = Json.stringify(Json.toJson(jsonMap))
     //println("Comparisons: " + comparisons)
