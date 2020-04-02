@@ -10,9 +10,10 @@ class KMPmatcher(var pattern: String) {
   var comparisons = 0
   var listForSteps: List[Map[String, String]] = List()
 
-  def getPrefixFun(): ArrayBuffer[Int] = {
+  def getPrefixFun(): List[Int] = {
     val lookupTable = ArrayBuffer.fill(pattern.length)(-1)
     lookupTable(0) = 0 // first char always 0
+
     var len = 0
     var i = 1
     while( i < pattern.length) {
@@ -29,11 +30,14 @@ class KMPmatcher(var pattern: String) {
         }
       }
     }
-    lookupTable
+
+
+
+    lookupTable.toList
   }
 
   def findAllIn(text: String): Iterator[Int] = {
-    var comparisons = 0
+    //var comparisons = 0
     var result: ArrayBuffer[Int] = ArrayBuffer()
     comparisons += 3 //because it does 3 comparisons outside while loop
     if (pattern.length > text.length) println("bad input")
@@ -41,6 +45,7 @@ class KMPmatcher(var pattern: String) {
     else if (pattern == text) println("same strings")
     else {
       val lookupTable = getPrefixFun()
+      lookupTable.drop(1)
 
       var i= 0 // for pattern
       var j= 0 // for searchIn
@@ -73,7 +78,41 @@ class KMPmatcher(var pattern: String) {
     result.toIterator
 
   }
-
+//  def findAllSearchSteps(pool: String): List[(Int, Int, Int, Int)] ={
+//    var result: List[(Int, Int, Int, Int)] = List()
+//    var tba: List[(Int, Int, Int, Int)] = List()
+//    val n = pool.length
+//    val m = this.pattern.length
+//    val π = this.getPrefixFun
+//    var k = 0
+//    var start = k
+//    var lastK = k
+//    for (i <- 0 until n) {
+//      while (k > 0 && this.pattern(k) != pool.charAt(i)) {
+//        val last = π(k)
+//        k = π(k)
+//        tba = (i - k, last, last, 0) :: tba
+//      }
+//      if (this.pattern(k) == pool.charAt(i)) {
+//        k = k + 1
+//        tba = List()
+//      }
+//      if (k == m) {
+//        result = (i - m + 1, start - 1, k - 1, 1) :: result
+//        k = π(k)
+//        start = k
+//      } else if (k != lastK + 1) {
+//        result = (i - lastK, start, lastK, 0) :: result
+//        start = k
+//      }
+//      if (tba.nonEmpty) {
+//        tba.reverse.foreach(tuple => result = tuple :: result)
+//        tba = List()
+//      }
+//      lastK = k
+//    }
+//    result.reverse
+//  }
   def toJson(text: String): String = {
     val jsonAlgorithm: JsValue = Json.toJson("KMP")
     val jsonPattern: JsValue = Json.toJson(pattern)
@@ -86,7 +125,13 @@ class KMPmatcher(var pattern: String) {
       prefixFunList.append(List(i, prefixFunElements(i)))
     }
     val jsonPrefixFun: JsValue = Json.toJson(prefixFunList.toList)
-   // val jsonSteps: JsValue = Json.toJson(listForSteps) //List[Map[String, String]]
+  //  val searchSteps = findAllSearchSteps(text)
+//    val readyStepsMap: Map[String, String] = Map()
+//    for (i <- searchSteps){
+//
+//    }
+   // println("Searchsteps: " + searchSteps)
+ //   val jsonSteps: JsValue = Json.toJson(searchSteps) //List[Map[String, String]]
     val jsonComparisons: JsValue = Json.toJson(comparisons)
 
     val jsonMap: Map[String, JsValue] = Map(
@@ -94,6 +139,7 @@ class KMPmatcher(var pattern: String) {
       "pattern" -> jsonPattern,
       "text" -> jsonText,
       "prefixFun" -> jsonPrefixFun,
+
    //   "steps" -> jsonSteps,
     "comparisons" -> jsonComparisons
     )
