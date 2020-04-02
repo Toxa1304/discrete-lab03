@@ -8,6 +8,8 @@ class KMPmatcher(var pattern: String) {
   // Add some initialization steps -> you can compute the prefix function...
   // loops...
   var comparisons = 0
+  var listForSteps: List[Map[String, String]] = List()
+
   def getPrefixFun(): ArrayBuffer[Int] = {
     val lookupTable = ArrayBuffer.fill(pattern.length)(-1)
     lookupTable(0) = 0 // first char always 0
@@ -30,26 +32,26 @@ class KMPmatcher(var pattern: String) {
     lookupTable
   }
 
-  def findAllIn(searchIn: String): Iterator[Int] = {
+  def findAllIn(text: String): Iterator[Int] = {
     var comparisons = 0
     var result: ArrayBuffer[Int] = ArrayBuffer()
     comparisons += 3 //because it does 3 comparisons outside while loop
-    if (pattern.length > searchIn.length) println("bad input")
+    if (pattern.length > text.length) println("bad input")
 
-    else if (pattern == searchIn) println("same strings")
+    else if (pattern == text) println("same strings")
     else {
       val lookupTable = getPrefixFun()
 
       var i= 0 // for pattern
       var j= 0 // for searchIn
 
-      while (i < searchIn.length) {
+      while (i < text.length) {
         comparisons += 1 // count all comparisons
-        if (searchIn(i) == pattern(j)) {
+        if (text(i) == pattern(j)) {
           i += 1
           j += 1
 
-          println(i)
+
         }
         if (j == pattern.length) {
           println(s"pattern found at ${i-j}")
@@ -59,7 +61,7 @@ class KMPmatcher(var pattern: String) {
         }
         else {
 
-          if (i < searchIn.length && searchIn(i) != pattern(j)) {
+          if (i < text.length && text(i) != pattern(j)) {
             if (j != 0) j = lookupTable(j-1)
             else i+=1
 
@@ -100,3 +102,5 @@ class KMPmatcher(var pattern: String) {
     result
   }
 }
+
+// inspiration sources: https://codereview.stackexchange.com/questions/212068/kmp-algorithm-in-scala
