@@ -4,8 +4,9 @@ import org.scalatest._
 
 class KMPpublicTest  extends FunSuite {
   test("this is a simple test") {
+    var matcher = new KMPmatcher("ABCDABD")
+    println(matcher.getPrefixFun())
 
-    assert(1 === 1)
 
   }
 }
