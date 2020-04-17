@@ -1,102 +1,110 @@
 package lv.rbs.ds.lab03
 
-class BMmatcher(pattern: String) {
 
-  /**
-   * This method should return a list of length m (length of the pattern).
-   * Good Suffix function
-   */
-  def getGoodSuffixFun(): Map[Int, Int] = {
-    val strOps = pattern.reverse
+import play.api.libs.json.{JsValue, Json}
 
-    /* create a list of valid characters from the str */
-    val strList = strOps.foldLeft(List[Char]()) {
-      case (l, ch) if !l.contains(ch) => ch :: l
-      case (l, ch) => l
+class BMmatcher(pattern:String) {
+  var patternOcurred = pattern.toCharArray
+  var comparasions:Int = 0
+  var steps:List[Map[String, String]] = List()
+  var ASCII_SIZE: Int = 256
+  def max(a: Int, b: Int): Int = Math.max(a, b)
+
+  def findAllIn(text: String): List[Int] = {
+    var result:List[Int] = List()
+    var txt = text.toCharArray
+    val m: Int = patternOcurred.length
+    val n: Int = txt.length
+    // initiate array of bad characters
+    val badchar: Array[Int] = Array.ofDim[Int](ASCII_SIZE)
+    for (i <- 0 until ASCII_SIZE) {
+      badchar(i) = -1
+    }
+    for (i <- 0 until m) {
+      badchar(patternOcurred(i).toInt) = i
+    }
+    var s: Int = 0
+    while (s <= (n - m)) {
+      var j: Int = m - 1
+
+      while (j >= 0 && patternOcurred(j) == txt(s + j)) j -= 1
+      if (j < 0) {
+        result = result :+ s
+        if (s + m < n) s += m - badchar(txt(s + m))
+        else s += 1
+      }
+      else {
+        s += max(1, j - badchar(txt(s + j)))
+      }
+    }
+    result
+  }
+  def getGoodSuffixFun(): List[(Int,Int)] = {
+    val m: Int = patternOcurred.length
+    val bpos: Array[Int] = Array.ofDim[Int](m + 1)
+    val shift: Array[Int] = Array.ofDim[Int](m + 1)
+    for (i <- 0 until m + 1) shift(i) = 0
+    var i: Int = m
+    var j: Int = m + 1
+    bpos(i) = j
+    while (i > 0) {
+      while (j <= m && patternOcurred(i - 1) != patternOcurred(j - 1)) {
+        if (shift(j) == 0) shift(j) = j - i
+        j = bpos(j)
+      }
+      i -= 1
+      j -= 1
+      bpos(i) = j
+    }
+    j = bpos(0)
+    i = 0
+
+    while (i <= m) {
+      if (shift(i) == 0) shift(i) = j
+
+      if (i == j) j = bpos(j)
+      i += 1
     }
 
-    val result = strOps.foldLeft(Map[Int, Int](), 0, "") {
-      case ((mMap, pos, subStr), ch) if pos != 0 => (mMap ++ Map(pos -> calculate(pos, subStr, `pattern`,
-        /* a valid characters list is reconstructed again without its actual character */
-        `strList`.filter {
-          case x if x == ch => false
-          case _ => true
-        })), pos + 1, ch + subStr)
-      case ((mMap, pos, subStr), ch) => (Map(0 -> 1), pos + 1, ch + subStr)
+    shift.toList
+    var answer:List[(Int, Int)] = List()
+    var counter = 0
+
+    for(i <- shift){
+      answer = answer :+ (counter, i)
+      counter += 1
     }
-    result._1
+    answer
   }
 
-  def getBadCharFun(): Map[Char,Int] = {
-    /* reverse: to use foldLeft,
-      tail: the last(now head) charcter, which is not neede, is dropped */
-    val result = pattern.reverse.tail.foldLeft(Map[Char,Int](),1)  {
-      case ((mMap,pos),ch) if ! mMap.isDefinedAt(ch) => (mMap ++ Map(ch -> pos), pos+1)
-      case ((mMap,pos),ch)                           => (mMap,pos +1)
+  def getBadCharFun(): List[(Char, Int)] = {
+    val badchar: Array[Int] = Array.ofDim[Int](ASCII_SIZE)
+    for (i <- patternOcurred.indices) {
+      badchar(patternOcurred(i).toInt) = i
     }
-    return result._1
+    val a = badchar.filter(_ > 0)
 
+    var list: List[(Char, Int)] = List()
+    for (i <- badchar.indices) {
+      if (badchar(i) > 0) {
+        list = list :+ (i.toChar, badchar(i))
+      }
+    }
+    list
   }
 
-  def findAllIn(text: CharSequence): Iterator[Int] = {
-    List().iterator
-  }
-
-  def toJson(text: CharSequence): String = {
-    ""
-  }
-
-
-  def calculate(pos : Int, subStr : String,
-                str : String, strList : List[Char]) : Int = {
-
-    /* strList will be empty when the recursive call to this function
-        for backtracking subStr is invoked*/
-    if (strList.isEmpty) {
-      val jListMin = subSetJump(subStr, str)
-
-      /* the current subStr is not a valid sub string,
-        backtrack 1 and calculate to find again*/
-      if (jListMin < 0)
-        return calculate(pos - 1, subStr.tail,
-          str, List[Char]())
-
-      /* the current subStr is a valid sub String
-          but the jump is 0 and no moving. backtrack 1 and calculate */
-      if (str.length - 1 - pos - jListMin == 0)
-        return calculate(pos - 1, subStr.tail,
-          str, List[Char]())
-
-      /* difference of current pos(counting from front)
-        with the position first of the first valid subset */
-      return str.length - 1 - pos - jListMin
-    }
-
-    /* get the positions of all valid sub strings
-      constructed with valid characters */
-    val jList = strList.foldLeft(List[Int]()) {
-      (j, ch) => subSetJump(ch + `subStr`, `str`) :: j
-    }
-    /* jList.max is less than 0, the rest will be the same */
-    if (jList.max < 0) {
-      if (subStr.length == 1)	return str.length
-      return calculate(pos - 1, subStr,
-        str, List[Char]())
-    }
-
-    /* we will use the minimum positive value including 0*/
-    val jListmin=(jList.filter{
-      case x if x >= 0 => true
-      case x           => false}).min
-
-    if (str.length - 1 - pos - jListmin == 0)
-      return calculate(pos - 1, subStr.tail,
-        str, List[Char]())
-    return str.length - 1 - pos - jListmin
-  }
-  def subSetJump(subStr : String, str : String) : Int = {
-    val list = (for (i <- 0 until str.length)
-      yield str.slice(i, i + subStr.length)).toList
-    list.indexOf(subStr)
+  def toJson(text: String): String = {
+    var sufix = getGoodSuffixFun()
+    findAllIn(text)
+    val jsonMap: Map[String, JsValue] = Map(
+      "algorithm" -> Json.toJson("BM"),
+      "pattern" -> Json.toJson(pattern),
+      "text" -> Json.toJson(text.toString),
+      "prefixFun" -> Json.toJson(sufix),
+      "steps" -> Json.toJson(steps),
+      "comparisons" -> Json.toJson(comparasions)
+    )
+    val reply = Json.stringify(Json.toJson(jsonMap))
+    reply
   }
 }
